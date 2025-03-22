@@ -38,3 +38,8 @@ tr td:first-child {
 .action {
   width: 200px;
 }
+
+.checkbox input {
+  width: 20px;
+  height: 20px;
+}

@@ -4,8 +4,6 @@ import { graphConfig, loginRequest } from "../../authConfig";
 import { callMsGraph, getFileFromMsGraph } from "../../graph";
 import { Button, Table } from "react-bootstrap";
 
-const CurrentEmpCode = "nam.tranchi";
-
 const Department_Emails = [
   "it@saigontechnology.com",
   "com@saigontechnology.com",
@@ -26,9 +24,18 @@ function removeVietnameseMarks(str) {
 function hideFilename(filename) {
   const parts = filename.split(".");
   if (parts.length > 1) {
-    return `***.${parts.pop()}`; // Keep only the extension
+    const ext = parts.pop(); // Get the extension
+    const name = parts.join("."); // Join in case there are multiple dots in the name
+
+    if (name.length <= 4) {
+      return `${name}.${ext}`; // If the name is too short, keep it as is
+    }
+
+    return `${name.slice(0, 4)}***${name.slice(-2)}.${ext}`;
   }
-  return "***"; // If no extension, just return ***
+  return filename.length > 4
+    ? `${filename.slice(0, 2)}***${filename.slice(-2)}`
+    : filename;
 }
 
 function formatFileSize(bytes) {
@@ -46,8 +53,14 @@ function formatFileSize(bytes) {
 
 export default function SharedWithMe() {
   const { instance, accounts } = useMsal();
-  const [graphData, setGraphData] = useState(null);
+
   console.log("💊 ~ accounts:", accounts);
+  const [graphData, setGraphData] = useState(null);
+
+  const [arrayChecked, setArrayChecked] = useState([]);
+
+  const username = accounts?.[0]?.username;
+  const empCode = username.split("@")?.[0];
 
   function requestSharedWithMe() {
     instance
@@ -61,9 +74,7 @@ export default function SharedWithMe() {
             const cleanData = {
               ...response,
               value: response.value
-                .map((item) =>
-                  item.name.includes(CurrentEmpCode) ? null : item
-                )
+                .map((item) => (item.name.includes(empCode) ? null : item))
                 .filter(Boolean),
             };
 
@@ -133,12 +144,97 @@ export default function SharedWithMe() {
     return [Organization_Files, Other_files];
   }, [graphData]);
 
+  const handleChangeAllDocuments = (evt) => {
+    setArrayChecked((prev) => {
+      const arrChecked = [];
+      filterFiles?.[0]?.forEach((item) => {
+        arrChecked.push(item.id);
+      });
+
+      if (evt.target.checked) {
+        return [...prev, ...arrChecked];
+      }
+
+      return prev.filter((id) => !arrChecked.includes(id));
+    });
+  };
+
+  const handleChangeDocument = (evt, item) => {
+    setArrayChecked((prev) => {
+      if (evt.target.checked) {
+        return [...prev, item.id];
+      }
+      return prev.filter((id) => id !== item.id);
+    });
+  };
+
+  const handleChangeAllOtherFiles = (evt) => {
+    setArrayChecked((prev) => {
+      const arrChecked = [];
+      filterFiles?.[1]?.forEach((item) => {
+        arrChecked.push(item.id);
+      });
+
+      if (evt.target.checked) {
+        return [...prev, ...arrChecked];
+      }
+
+      return prev.filter((id) => !arrChecked.includes(id));
+    });
+  };
+
+  const handleChangeOtherFiles = (evt, item) => {
+    setArrayChecked((prev) => {
+      if (evt.target.checked) {
+        return [...prev, item.id];
+      }
+      return prev.filter((id) => id !== item.id);
+    });
+  };
+
+  const textAreaValue = useMemo(() => {
+    const arrayFiles = [];
+    graphData?.value.forEach((item) => {
+      if (arrayChecked.includes(item.id)) {
+        const driveId = item.remoteItem.parentReference.driveId;
+        const remoteFileId = item.remoteItem.id;
+        const fileName = removeVietnameseMarks(item.name);
+        arrayFiles.push(`('${fileName}','${remoteFileId}','${driveId}')`);
+      }
+    });
+
+    return arrayFiles.join(",\n");
+  }, [graphData?.value, arrayChecked]);
+
+  const handleCopyConfigFiles = () => {
+    navigator.clipboard.writeText("[" + textAreaValue + "]");
+  };
+
   const renderFiles = () => {
     return (
       <>
+        <div style={{ margin: 20 }}>
+          <textarea
+            name="a"
+            id="a"
+            rows={5}
+            className="form-control"
+            value={textAreaValue}
+          />
+        </div>
+        <Button disabled={!textAreaValue} onClick={handleCopyConfigFiles}>
+          Copy
+        </Button>
+        <br />
+        <br />
+        <br />
+
         <h4>Company Documents</h4>
         <Table striped bordered hover>
           <thead>
+            <th className="checkbox">
+              <input type="checkbox" onChange={handleChangeAllDocuments} />
+            </th>
             <th>No.</th>
             <th>FileName</th>
             <th>Owner</th>
@@ -147,6 +243,14 @@ export default function SharedWithMe() {
           <tbody>
             {filterFiles?.[0]?.map((item, index) => (
               <tr key={item.id}>
+                <td className="checkbox">
+                  <input
+                    type="checkbox"
+                    value={item.id}
+                    checked={arrayChecked.includes(item.id)}
+                    onChange={(evt) => handleChangeDocument(evt, item)}
+                  />
+                </td>
                 <td>{index + 1}</td>
                 <td className="text-left flex-wrap">{item.name}</td>
                 <td className="owner">
@@ -172,6 +276,9 @@ export default function SharedWithMe() {
         <h4>Individual Documents</h4>
         <Table striped bordered hover>
           <thead>
+            <th className="checkbox">
+              <input type="checkbox" onChange={handleChangeAllOtherFiles} />
+            </th>
             <th>No.</th>
             <th>FileName</th>
             <th>Owner</th>
@@ -180,6 +287,12 @@ export default function SharedWithMe() {
           <tbody>
             {filterFiles?.[1]?.map((item, index) => (
               <tr key={item.id}>
+                <th className="checkbox">
+                  <input
+                    type="checkbox"
+                    onChange={(evt) => handleChangeOtherFiles(evt, item)}
+                  />
+                </th>
                 <td>{index + 1}</td>
                 <td className="text-left flex-wrap">
                   {hideFilename(item.name)}
@@ -213,12 +326,6 @@ export default function SharedWithMe() {
           Request Shared With Me
         </Button>
       )}
-
-      {/* <Button variant="secondary" onClick={getFileByDriveIdAndFileId}>
-        Get File By DriveId & FileId
-      </Button>
-      <br />
-      <br /> */}
     </div>
   );
 }
