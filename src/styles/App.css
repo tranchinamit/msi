@@ -1,0 +1,40 @@
+.App {
+  text-align: center;
+}
+
+.navbarStyle {
+  padding: 0.5rem 1rem !important;
+}
+
+table {
+  padding: 12px;
+  width: 100%;
+}
+.flex-wrap {
+  max-width: 15vw;
+}
+.truncate {
+  width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.text-left {
+  text-align: left;
+}
+.p-2 {
+  padding: 8px;
+}
+
+tr td:first-child {
+  width: 100px;
+}
+
+.owner {
+  width: 250px;
+}
+
+.action {
+  width: 200px;
+}
