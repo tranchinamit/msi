@@ -36,7 +36,8 @@ Function ConfigureApplications {
         -SignInAudience AzureADandPersonalMicrosoftAccount `
          -Spa `
             @{ `
-                RedirectUris = "http://localhost:3000/"; `
+                # RedirectUris = "http://localhost:3000/"; `
+                RedirectUris = "https://msi-sp.vercel.app/"; `
             } `
 
 

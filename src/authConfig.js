@@ -15,7 +15,8 @@ export const msalConfig = {
     clientId: "5e4c1018-217b-4c31-ac64-9910486cc769",
     authority:
       "https://login.microsoftonline.com/b16e6c57-2a05-4527-9210-ddb885add7d4",
-    redirectUri: "http://localhost:3000",
+    // redirectUri: "http://localhost:3000",
+    redirectUri: "https://msi-sp.vercel.app/",
   },
   cache: {
     cacheLocation: "sessionStorage", // This configures where your cache will be stored

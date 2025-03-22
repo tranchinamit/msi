@@ -11,7 +11,8 @@
       "x-ms-version": "2.0",
       "replyUrlsWithType": [
         {
-          "url": "http://localhost:3000/",
+          // "url": "http://localhost:3000/",
+          "url": "https://msi-sp.vercel.app/",
           "type": "Spa"
         }
       ],
