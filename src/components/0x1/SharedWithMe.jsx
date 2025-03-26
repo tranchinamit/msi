@@ -10,6 +10,7 @@ const Department_Emails = [
   "hr@saigontechnology.com",
   "hrinternal@saigontechnology.com",
   "manager.sdc@saigontechnology.com",
+  "qa@saigontechnology.com",
 ];
 
 function removeVietnameseMarks(str) {
@@ -56,6 +57,7 @@ export default function SharedWithMe() {
 
   console.log("💊 ~ accounts:", accounts);
   const [graphData, setGraphData] = useState(null);
+  const [allFiles, setAllFiles] = useState(null);
 
   const [arrayChecked, setArrayChecked] = useState([]);
 
@@ -69,8 +71,10 @@ export default function SharedWithMe() {
         account: accounts[0],
       })
       .then((response) => {
+        // callMsGraph(response.accessToken, graphConfig.search()).then(
         callMsGraph(response.accessToken, graphConfig.sharedWithMe()).then(
           (response) => {
+            setAllFiles(response);
             const cleanData = {
               ...response,
               value: response.value
@@ -317,6 +321,48 @@ export default function SharedWithMe() {
     );
   };
 
+  const renderAllFiles = () => {
+    return (
+      <Table striped bordered hover>
+        <thead>
+          <th className="checkbox">
+            <input type="checkbox" onChange={handleChangeAllOtherFiles} />
+          </th>
+          <th>No.</th>
+          <th>FileName</th>
+          <th>Owner</th>
+          <th></th>
+        </thead>
+        <tbody>
+          {allFiles?.value?.map((item, index) => (
+            <tr key={item.id}>
+              <th className="checkbox">
+                <input
+                  type="checkbox"
+                  onChange={(evt) => handleChangeOtherFiles(evt, item)}
+                />
+              </th>
+              <td>{index + 1}</td>
+              <td className="text-left flex-wrap">{item.name}</td>
+              <td className="owner">
+                {item.remoteItem.shared.sharedBy.user.displayName}
+              </td>
+              <td className="p-2 action">
+                <Button
+                  onClick={() => getFileByDriveIdAndFileId(item)}
+                  variant="success"
+                  size="sm"
+                >
+                  Download {formatFileSize(item.size)}
+                </Button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
+    );
+  };
+
   return (
     <div>
       {graphData?.value ? (
@@ -326,6 +372,8 @@ export default function SharedWithMe() {
           Request Shared With Me
         </Button>
       )}
+
+      {/* {renderAllFiles()} */}
     </div>
   );
 }
